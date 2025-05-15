@@ -76,4 +76,3 @@ if __name__ == "__main__":
 
     fetcher_thread.join()
     sender_thread.join()
-        
