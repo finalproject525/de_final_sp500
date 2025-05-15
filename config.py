@@ -1,4 +1,6 @@
-from finance.functions import get_sp500_symbol
+
+
+"change to True to get all 500 Tickers of sp500"
 TEST = False
 
 SYMBOLS_TEST = ["AAPL", "MSFT", "GOOG","TSLA","NVDA","META","AMZN"]
