@@ -1,4 +1,4 @@
-from consumer.SparkKafkaConsumer import SparkKafkaConsumer
+from SparkKafkaConsumer import SparkKafkaConsumer
 from config import AWS_S3_BUCKET, BROKER, TOPIC
 
 if __name__ == "__main__":

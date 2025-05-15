@@ -1,11 +1,10 @@
 
 import threading
 import queue
-import time
 import json
 from kafka import KafkaProducer
 from finance.functions import get_sp500_symbol
-from finance.YahooFinance import YahooBatchFinanceClient  
+from finance.YahooFinance import YahooBatchFinanceClient
 from config import TEST,SYMBOLS_TEST,BROKER,TOPIC,PERIOD,INTERVAL,API_BATCH_SIZE
 #from producer.kafka_producer import create_producer,send_messages 
 
@@ -53,8 +52,7 @@ def send_messages(producer, topic, messages):
         producer.send(topic, value=message)
     producer.flush()
 
-
-if __name__ == "__main__":
+def main():
 
     data_queue = queue.Queue()
 
@@ -76,3 +74,9 @@ if __name__ == "__main__":
 
     fetcher_thread.join()
     sender_thread.join()
+
+
+    
+
+if __name__ == "__main__":
+    main()

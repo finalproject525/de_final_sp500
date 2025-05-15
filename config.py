@@ -10,7 +10,7 @@ SYMBOLS_TEST = ["AAPL", "MSFT", "GOOG","TSLA","NVDA","META","AMZN"]
 
 
 ################ yfinance api config#############################
-PERIOD = "720d"
+PERIOD = "1d"
 INTERVAL = "60m" 
 API_BATCH_SIZE = 50
 
