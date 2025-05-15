@@ -1,0 +1,13 @@
+{
+  "python.defaultInterpreterPath": "/project/workspace/sp500/.venv/bin/python",
+  "python.pythonPath": "/project/workspace/sp500/.venv/bin/python",
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "code-runner.executorMap.python": "/project/workspace/sp500/.venv/bin/python",
+  "code-runner.runInTerminal": true,
+  "files.watcherExclude": {
+    "**/.venv/**": true
+  },
+  "search.exclude": {
+    "**/.venv/**": true
+  }
+}
