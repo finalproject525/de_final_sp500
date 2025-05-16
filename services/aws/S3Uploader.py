@@ -62,3 +62,4 @@ class S3Uploader:
         except (BotoCoreError, ClientError, Exception) as e:
             print(f"❌ Parquet upload failed: {e}")
             raise
+

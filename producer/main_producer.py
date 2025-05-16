@@ -5,7 +5,7 @@ import json
 from kafka import KafkaProducer
 from finance.functions import get_sp500_symbol
 from finance.YahooFinance import YahooBatchFinanceClient
-from config import TEST,SYMBOLS_TEST,BROKER,TOPIC,PERIOD,INTERVAL,API_BATCH_SIZE
+from config import USE_SYMBOLES_TEST,SYMBOLS_TEST,BROKER,TOPIC,PERIOD,INTERVAL,API_BATCH_SIZE
 #from producer.kafka_producer import create_producer,send_messages 
 
 
@@ -56,7 +56,7 @@ def main():
 
     data_queue = queue.Queue()
 
-    if TEST == True:
+    if USE_SYMBOLES_TEST == True:
         symbols = SYMBOLS_TEST  # List of stock symbols
     else :
         symbols = get_sp500_symbol()['Symbol'].to_list()  # List of stock symbols
