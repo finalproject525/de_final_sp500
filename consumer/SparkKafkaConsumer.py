@@ -1,8 +1,17 @@
+import json
 from pyspark.sql import SparkSession
+
 from pyspark.sql.functions import col, from_json
 from pyspark.sql.types import StructType, StringType
-from services.aws.S3Uploader import S3Uploader
+
 from config import USE_DYNAMIC_GROUP
+
+try :
+    from services.aws.S3Uploader import S3Uploader
+except ImportError:
+        #when runing from dev container
+    from services.aws.S3Uploader import S3Uploader
+
 
 class SparkKafkaConsumer:
     def __init__(self, kafka_bootstrap_servers, topic, s3_bucket, json_prefix="json", parquet_prefix="parquet"):
@@ -15,12 +24,13 @@ class SparkKafkaConsumer:
         self.uploader = S3Uploader(bucket_name=self.s3_bucket)
 
     def _create_spark_session(self):
-        return SparkSession.builder \
+        spark = SparkSession.builder \
             .appName("KafkaSparkToS3") \
             .master("local[*]") \
             .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0") \
             .getOrCreate()
-
+        spark.sparkContext.setLogLevel("ERROR")
+        return spark
     def _parse_kafka_stream(self):
         schema = StructType() \
             .add("Open", StringType()) \
@@ -44,44 +54,33 @@ class SparkKafkaConsumer:
             .select("data.*")
 
         return parsed_df
-
-    def _write_batch_to_s3_old(self, batch_df, batch_id):
-        if batch_df.isEmpty():
-            print(f"⚠️ Batch {batch_id} is empty — skipping S3 upload.")
-            return
-
-        pd_df = batch_df.toPandas()
-        records = pd_df.to_dict(orient="records")
-
-        print(f"📤 Sending batch {batch_id} to S3")
-        self.uploader.upload_json(records, prefix=self.json_prefix)
-        self.uploader.upload_dataframe_as_parquet(pd_df, s3_key=self._make_parquet_key(batch_id))
-
-        
     def _write_batch_to_s3(self, batch_df, batch_id):
-        # Checks if the batch is empty
+        # Check if the batch is empty
         if batch_df.rdd.isEmpty():
             print(f"⚠️ Batch {batch_id} is empty — skipping S3 upload.")
             return
 
-        # Displays the number of rows in the batch
+        # Count the number of rows in the batch
         row_count = batch_df.count()
         print(f"📊 Batch {batch_id} has {row_count} rows.")
 
-        # Converts to a pandas DataFrame
-        pd_df = batch_df.toPandas()
+        try:
+            # Convert the Spark DataFrame to a list of Python dictionaries
+            records = batch_df.toJSON().map(lambda x: json.loads(x)).collect()
 
-        # Converts to a list of dictionaries for JSON
-        records = pd_df.to_dict(orient="records")
+            print(f"📤 Uploading batch {batch_id} to S3...")
 
-        print(f"📤 Sending batch {batch_id} to S3")
+            # Upload JSON to S3
+            self.uploader.upload_json(records, prefix=self.json_prefix)
 
-        # Upload to S3: JSON + Parquet
-        self.uploader.upload_json(records, prefix=self.json_prefix)
-        self.uploader.upload_dataframe_as_parquet(
-            pd_df,
-            prefix=self.parquet_prefix
-        )
+            # Upload Parquet to S3
+            self.uploader.upload_as_parquet(records, prefix=self.parquet_prefix)
+
+        except Exception as e:
+            print(f"❌ Failed to process or upload batch {batch_id}: {e}")
+
+
+
 
     def _make_parquet_key(self, batch_id):
         return f"{self.parquet_prefix}/batch_{batch_id}.parquet"

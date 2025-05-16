@@ -1,12 +1,11 @@
-import boto3
-from io import StringIO
 import os
-import pandas as pd
 import json
-from datetime import datetime
-from botocore.exceptions import BotoCoreError, ClientError
-from dotenv import load_dotenv
+import boto3 
 from io import BytesIO
+from pyarrow import Table
+import pyarrow.parquet as pq
+from datetime import datetime 
+from botocore.exceptions import BotoCoreError, ClientError
 
 class S3Uploader:
     def __init__(self, bucket_name: str):
@@ -17,18 +16,6 @@ class S3Uploader:
             aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
             region_name=os.getenv('AWS_DEFAULT_REGION')
         )
-
-    def upload_dataframe_as_csv(self, df: pd.DataFrame, s3_key: str):
-        csv_buffer = StringIO()
-        df.to_csv(csv_buffer, index=True)
-        response = self.s3_client.put_object(
-            Bucket=self.bucket_name,
-            Key=s3_key,
-            Body=csv_buffer.getvalue()
-        )
-        print(f"✅ Upload successful: s3://{self.bucket_name}/{s3_key}")
-        return response
-
 
     def upload_json(self, data: list[dict], prefix: str = "kafka"):
         try:
@@ -50,7 +37,7 @@ class S3Uploader:
             print(f"❌ JSON upload failed: {e}")
             raise
 
-    def upload_dataframe_as_parquet(self, df: pd.DataFrame, prefix: str = "kafka"):
+    def upload_as_parquet(self, data: list[dict], prefix: str = "kafka"):
         try:
             now = datetime.utcnow()
             timestamp = now.strftime("%Y-%m-%dT%H-%M-%S")
@@ -58,8 +45,10 @@ class S3Uploader:
 
             key = f"{prefix}/{date_path}/data_{timestamp}.parquet"
 
+            # Convert to Arrow table
+            table = Table.from_pylist(data)
             buffer = BytesIO()
-            df.to_parquet(buffer, index=False, engine='pyarrow')
+            pq.write_table(table, buffer)
             buffer.seek(0)
 
             self.s3_client.put_object(
@@ -69,6 +58,7 @@ class S3Uploader:
             )
 
             print(f"✅ Parquet upload successful: s3://{self.bucket_name}/{key}")
-        except (BotoCoreError, ClientError) as e:
+
+        except (BotoCoreError, ClientError, Exception) as e:
             print(f"❌ Parquet upload failed: {e}")
             raise

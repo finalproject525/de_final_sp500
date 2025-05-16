@@ -1,7 +1,14 @@
-from SparkKafkaConsumer import SparkKafkaConsumer
+try:
+    #when run in consumer container
+    from SparkKafkaConsumer import SparkKafkaConsumer
+except ImportError:
+    #when runing from dev container
+    from consumer.SparkKafkaConsumer import SparkKafkaConsumer
+    
 from config import AWS_S3_BUCKET, BROKER, TOPIC
 
-if __name__ == "__main__":
+
+def main():
     consumer = SparkKafkaConsumer(
         kafka_bootstrap_servers=BROKER[0],
         topic=TOPIC,
@@ -11,4 +18,6 @@ if __name__ == "__main__":
     )
     consumer.start()
 
+if __name__ == "__main__":
+    main()
 
