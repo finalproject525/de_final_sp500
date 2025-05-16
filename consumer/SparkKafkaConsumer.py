@@ -42,6 +42,8 @@ class SparkKafkaConsumer:
             .add("timestamp", StringType()) \
             .add("datetime", StringType())
 
+ 
+        
         raw_df = self.spark.readStream \
             .format("kafka") \
             .option("kafka.bootstrap.servers", self.kafka_bootstrap_servers) \
