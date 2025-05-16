@@ -1,4 +1,4 @@
-
+import os
 #######################TEST VARIABLES##########################
 
 """ change to False to send data to AWS S3 """
@@ -24,11 +24,19 @@ BATCH_SIZE = 100
 USE_DYNAMIC_GROUP = False
 
 ################### AWS #########################################
-AWS_S3_BUCKET = "final-de-project-sp500"
 
+OUTPUT_FORMATS = ['json', 'parquet']
+S3_ACCESS= {'access_key':os.getenv("AWS_ACCESS_KEY_ID"),
+            'secret_key':os.getenv("AWS_SECRET_ACCESS_KEY"),
+            'endpoint':f"s3.{os.getenv('AWS_DEFAULT_REGION')}.amazonaws.com"
+        }
+BUCKET = "final-de-project-sp500" 
 
 #############MINIO#######################
-MINIO_ACCESS_KEY = "minioadmin"
-MINIO_SECRET_KEY = "minioadmin"
-MINIO_ENDPOINT = "http://minio:9000"
-MINIO_BUCKET = "final-de-project-sp500"
+
+MINIO_ACCESS= {'access_key':'minioadmin',
+               'secret_key':'minioadmin',
+               'endpoint':'http://minio:9000'
+               }
+
+

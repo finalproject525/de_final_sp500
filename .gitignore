@@ -1,8 +1,7 @@
 .env
 .venv/
-.vscode/
+/.vscode/
 **/__pycache__/
 *.py[cod]
-data/
 /test
- 
+/removed_files_and_concept

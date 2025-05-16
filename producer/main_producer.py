@@ -6,8 +6,6 @@ from kafka import KafkaProducer
 from finance.functions import get_sp500_symbol
 from finance.YahooFinance import YahooBatchFinanceClient
 from config import USE_SYMBOLES_TEST,SYMBOLS_TEST,BROKER,TOPIC,PERIOD,INTERVAL,API_BATCH_SIZE
-#from producer.kafka_producer import create_producer,send_messages 
-
 
 
 
