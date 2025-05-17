@@ -9,13 +9,18 @@ class ProducerManager:
     def __init__(self, broker):
         self.producer = KafkaProducer(
             bootstrap_servers=broker,
-            value_serializer=lambda v: json.dumps(v).encode('utf-8')
+            value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+            api_version=(2, 8)
         )
 
     def send_messages(self, topic, messages):
-        """
-        Send a list of messages to the given Kafka topic.
-        """
+        print(f"🛠 Sending to topic: {topic}, number of messages: {len(messages)}")
+
         for msg in messages:
-            self.producer.send(topic, value=msg)
+            try:
+                self.producer.send(topic, value=msg)
+            except Exception as e:
+                print(f"❌ Failed to send message: {e}")
+                raise
+
         self.producer.flush()

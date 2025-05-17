@@ -5,7 +5,7 @@ import os
 USE_MINIO = True
 
 "change to True to get all 500 Tickers of sp500"
-USE_SYMBOLES_TEST = False
+USE_SYMBOLES_TEST = True
 SYMBOLS_TEST = ["AAPL", "MSFT", "GOOG","TSLA","NVDA","META","AMZN"]
 
 
@@ -19,7 +19,7 @@ API_BATCH_SIZE = 50
 
 ################ Kafka Config ###################################
 TOPIC = 'yfinance-data'
-BROKER = ['kafka_alt:9092']
+BROKER = ['kafka_sp:9092']
 BATCH_SIZE = 100
 USE_DYNAMIC_GROUP = False
 

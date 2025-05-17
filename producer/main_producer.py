@@ -31,8 +31,16 @@ def main(params=None):
     else:
         raise NotImplementedError(f"API '{api_name}' is not supported.")
 
+    producer = ProducerManager(broker) 
+    import time
+    print("⏳ Waiting 5s before creating Kafka producer...")
+    time.sleep(5)
     producer = ProducerManager(broker)
-    fetcher = FinanceFetcher(client, data_queue)
+    print("✅ Kafka producer created.")
+
+    producer.send_messages(topic, [{"hello": "test"}])
+
+    fetcher = FinanceFetcher(client, data_queue) 
     sender = KafkaSender(producer, topic, data_queue)
 
     # Start threads
