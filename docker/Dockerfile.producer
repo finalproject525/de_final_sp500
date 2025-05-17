@@ -1,0 +1,51 @@
+FROM python:3.11
+
+# -------------------------------
+# Set working directory
+# -------------------------------
+WORKDIR /app
+
+# -------------------------------
+# Install system packages
+# -------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssh-server \
+    && rm -rf /var/lib/apt/lists/*
+
+# -------------------------------
+# SSH setup
+# -------------------------------
+RUN mkdir -p /var/run/sshd && \
+    echo 'root:root' | chpasswd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    ssh-keygen -A
+
+# -------------------------------
+# Copy producer code
+# -------------------------------
+COPY workspace/sp500 /app
+
+# -------------------------------
+# Install required Python packages
+# -------------------------------
+RUN pip install --no-cache-dir \
+    yfinance \
+    kafka-python \
+    pandas \
+    python-dateutil
+
+# -------------------------------
+# Copy and configure startup script
+# -------------------------------
+COPY docker/start_producer.sh /start_producer.sh
+RUN chmod +x /start_producer.sh
+
+# -------------------------------
+# Expose SSH port
+# -------------------------------
+EXPOSE 22
+
+# -------------------------------
+# Default command: launch script
+# -------------------------------
+CMD ["/start_producer.sh"]

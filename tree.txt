@@ -1,0 +1,29 @@
+📁 Project structure: C:\Users\rapha\OneDrive\Desktop\DE_final_project\de_final_sp500
+
+├── .env
+├── docker
+│   ├── Dockerfile.consumer
+│   ├── Dockerfile.dev_env_light
+│   ├── Dockerfile.producer
+│   ├── README_docker.md
+│   └── docker-compose.yaml
+└── workspace
+    └── sp500
+        ├── config.py
+        ├── consumer
+        │   ├── SparkKafkaConsumer.py
+        │   └── kafka_consumer.py
+        ├── dags
+        ├── finance
+        │   ├── YahooFinance.py
+        │   └── functions.py
+        ├── init_venv.sh
+        ├── main_consumer.py
+        ├── main_producer.py
+        ├── producer
+        ├── requirements.txt
+        ├── services
+        │   └── aws
+        │       └── S3Uploader.py
+        └── utils
+            └── bootstrap_venv.sh

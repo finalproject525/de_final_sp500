@@ -1,0 +1,13 @@
+.venv/
+workspace/sp500/.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ipynb_checkpoints/
+*.ipynb
+*.csv
+*.parquet
+*.json
+.env
+.git

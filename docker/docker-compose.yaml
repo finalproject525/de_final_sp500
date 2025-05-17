@@ -1,0 +1,187 @@
+services:
+
+    devcontainer:
+        container_name: devcontainer
+        build:
+          context: ..
+          dockerfile: docker/Dockerfile.dev_env_full
+        ports:
+          - "22023:22"      # SSH
+          - "8888:8888"     # Jupyter
+          - "4040:4040"     # Spark UI
+          - "4041:4041"
+          - "4042:4042"
+        volumes:
+          - ../workspace/sp500:/project/workspace/sp500          
+          - ../.git:/project/workspace/sp500/.git
+          - ../.gitignore:/project/workspace/sp500/.gitignore          
+        working_dir: /project/workspace/sp500
+        env_file:
+          - ../.env
+        environment:
+          AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+          AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+          AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}          
+        networks:
+            - net_sp
+
+    
+    zookeeper:
+        image: wurstmeister/zookeeper:latest
+        container_name: zookeeper_sp
+        ports:
+          - "2182:2181"
+        networks:
+            - net_sp
+    kafka_sp:
+        container_name: kafka_sp
+        image: wurstmeister/kafka:2.13-2.8.1
+        environment:
+            KAFKA_ADVERTISED_HOST_NAME: kafka_sp
+            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+        ports:
+            - "9093:9092"
+        depends_on:
+            - zookeeper
+        networks:
+            - net_sp
+    kafdrop:
+        container_name: kafdrop_sp
+        image: obsidiandynamics/kafdrop:3.30.0
+        ports:
+            - "9003:9000"
+        environment:
+            - KAFKA_BROKERCONNECT=kafka_sp:9092
+        depends_on:
+            - kafka_sp
+        networks:
+            - net_sp
+        
+        
+    yfinance-consumer:
+        build:
+          context: ..
+          dockerfile: docker/Dockerfile.consumer
+        container_name: yfinance-consumer
+        command: python /app/main_consumer.py
+        restart: always
+        depends_on:
+          - kafka_sp
+        env_file:
+          - ../.env
+        volumes:
+          - ../workspace/sp500:/project/workspace/sp500
+        environment:
+          AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+          AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+          AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}  
+          
+        networks:
+            - net_sp
+            
+    yfinance-producer:
+        build:
+          context: ..
+          dockerfile: docker/Dockerfile.producer
+        container_name: yfinance-producer
+        command: python /app/main_producer.py
+        depends_on:
+          - kafka_sp 
+        volumes:
+          - ../workspace/sp500:/project/workspace/sp500
+        env_file:
+          - ../.env
+        ports:
+          - "22025:22"  # SSH access to this container
+
+        networks:
+            - net_sp
+    minio_sp:
+        container_name: minio_sp
+        image: minio/minio:RELEASE.2022-11-08T05-27-07Z
+        command: server /data --console-address ":9001"
+        ports:
+            - "9001:9000"
+            - "9002:9001"
+        networks:
+            - net_sp
+            
+            
+    postgres:
+        container_name: postgres
+        image: postgres:15
+        environment:
+          - POSTGRES_USER=postgres
+          - POSTGRES_PASSWORD=postgres
+          - POSTGRES_DB=airflow
+        ports:
+          - "5432:5432"
+        networks:
+            - net_sp      
+    airflow-init-sp:
+        image: apache/airflow:2.8.1
+        container_name: airflow_init_sp
+        depends_on:
+          - postgres
+        environment:
+          - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+          - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:postgres@postgres:5432/airflow
+          - AIRFLOW__CORE__FERNET_KEY=FB0o_zt4e3Ziq3LdUUO7F2Z95cvFFx16hU8jTeR1ASM=
+          - AIRFLOW__CORE__LOAD_EXAMPLES=False
+        volumes:
+          - ../workspace/sp500/dags:/opt/airflow/dags
+        entrypoint: /bin/bash
+        command:
+          - -c
+          - >
+            airflow users list || (
+              airflow db init &&
+              airflow users create
+                --role Admin
+                --username airflow
+                --password airflow
+                --email airflow@airflow.com
+                --firstname airflow
+                --lastname airflow
+            )
+        networks:
+            - net_sp 
+        restart: on-failure
+
+    airflow-webserver_sp:
+        image: apache/airflow:2.8.1
+        container_name: airflow_webserver_sp
+        depends_on:
+          - postgres
+        environment:
+          - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+          - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:postgres@postgres:5432/airflow
+          - AIRFLOW__CORE__FERNET_KEY=FB0o_zt4e3Ziq3LdUUO7F2Z95cvFFx16hU8jTeR1ASM=
+          - AIRFLOW__CORE__LOAD_EXAMPLES=False
+        volumes:
+          - ../workspace/sp500/dags:/opt/airflow/dags
+        ports:
+          - "8083:8080"
+        command: airflow webserver
+        networks:
+            - net_sp 
+        restart: always
+
+    airflow-scheduler_sp:
+        image: apache/airflow:2.8.1
+        container_name: airflow_scheduler_sp
+        depends_on:
+          - postgres
+        environment:
+          - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+          - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:postgres@postgres:5432/airflow
+          - AIRFLOW__CORE__FERNET_KEY=FB0o_zt4e3Ziq3LdUUO7F2Z95cvFFx16hU8jTeR1ASM=
+          - AIRFLOW__CORE__LOAD_EXAMPLES=False
+        volumes:
+          - ../workspace/sp500/dags:/opt/airflow/dags
+        command: airflow scheduler
+        networks:
+            - net_sp 
+        restart: always
+networks:
+    net_sp: {}
