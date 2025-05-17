@@ -44,6 +44,3 @@ else
 fi
 
 echo "🎉 Environment is ready. Run: source .venv/bin/activate to use it."
-
-# Execute CMD passed from Dockerfile
-exec "$@"
