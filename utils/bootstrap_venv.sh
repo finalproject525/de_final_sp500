@@ -44,3 +44,8 @@ else
 fi
 
 echo "🎉 Environment is ready. Run: source .venv/bin/activate to use it."
+
+
+
+git config user.name "finalproject525"
+git config user.email "finalproject525@gmail.com.com"
